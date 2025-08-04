@@ -1,0 +1,74 @@
+// src/embed.js
+import React from "react";
+import { createRoot } from "react-dom/client";
+import ScreenshotWidget from "./ScreenshotWidget.jsx";
+
+// Global function to initialize the widget
+window.initScreenshotWidget = function (config = {}) {
+  // Prevent multiple initializations
+  if (document.getElementById("screenshot-widget-root")) {
+    console.warn("Screenshot widget already initialized");
+    return;
+  }
+
+  // Default configuration
+  const defaultConfig = {
+    apiEndpoint: "https://your-api.com/api/screenshots",
+    apiKey: "",
+    position: "bottom-right",
+    theme: "light",
+    containerId: "screenshot-widget-root",
+  };
+
+  const finalConfig = { ...defaultConfig, ...config };
+
+  // Create container
+  const container = document.createElement("div");
+  container.id = finalConfig.containerId;
+  document.body.appendChild(container);
+
+  // Create React root and render
+  const root = createRoot(container);
+  root.render(
+    <ScreenshotWidget
+      apiEndpoint={finalConfig.apiEndpoint}
+      apiKey={finalConfig.apiKey}
+      position={finalConfig.position}
+      theme={finalConfig.theme}
+    />
+  );
+
+  console.log("Screenshot widget initialized successfully");
+
+  // Return cleanup function
+  return () => {
+    root.unmount();
+    document.body.removeChild(container);
+  };
+};
+
+// Auto-initialize if data attributes are present on script tag
+document.addEventListener("DOMContentLoaded", () => {
+  const scriptTag = document.querySelector("script[data-screenshot-widget]");
+  if (scriptTag) {
+    const config = {
+      apiEndpoint: scriptTag.dataset.apiEndpoint,
+      apiKey: scriptTag.dataset.apiKey,
+      position: scriptTag.dataset.position,
+      theme: scriptTag.dataset.theme,
+    };
+
+    // Remove undefined values
+    Object.keys(config).forEach((key) => {
+      if (config[key] === undefined) {
+        delete config[key];
+      }
+    });
+
+    window.initScreenshotWidget(config);
+  }
+});
+
+// Export for module usage
+export { ScreenshotWidget };
+export default window.initScreenshotWidget;

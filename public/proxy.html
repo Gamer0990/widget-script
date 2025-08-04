@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <body>
+    <script>
+      window.addEventListener("message", async (event) => {
+        if (event.origin !== "https://your-trusted-widget-domain.com") return;
+
+        const { type, payload } = event.data;
+
+        if (type === "screenshot") {
+          const res = await fetch("https://your-api.com/upload-screenshot", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ image: payload }),
+          });
+
+          const json = await res.json();
+          event.source.postMessage(
+            { type: "done", result: json },
+            event.origin
+          );
+        }
+      });
+    </script>
+  </body>
+</html>
