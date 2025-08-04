@@ -41,6 +41,32 @@ const ScreenshotWidget = ({
   const requestQueue = useRef(new Map()); // Changed to Map for better lookup
   const currentTheme = themeStyles[theme] || themeStyles.light;
 
+  async function fetchCurrentUser() {
+    try {
+      const response = await fetch(
+        "https://fairpe.flonnect.com/fairpe/flonnect/api/enterprise/get-current-user",
+        {
+          method: "GET",
+          credentials: "include", // This ensures cookies are sent
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("current user data", data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      throw error;
+    }
+  }
+
   // Initialize iframe proxy
   useEffect(() => {
     const iframe = document.createElement("iframe");
@@ -264,6 +290,10 @@ const ScreenshotWidget = ({
       fetchCurrentUser();
     }
   }, [proxyReady, apiEndpoint, apiKey]);
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
 
   return (
     <WidgetWrapper
