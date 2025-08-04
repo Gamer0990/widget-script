@@ -28,7 +28,7 @@ const themeStyles = {
 // ========== Main Component ==========
 const ScreenshotWidget = ({
   apiEndpoint = "https://your-api.com/api/screenshots",
-  proxyUrl = "http://localhost:3000/proxy.html", // Your proxy iframe URL
+  proxyUrl = "https://fairpe.flonnect.com/proxy.html", // Your proxy iframe URL
   apiKey = "",
   position = "bottom-right",
   theme = "light",
@@ -56,13 +56,13 @@ const ScreenshotWidget = ({
     // Listen for messages from proxy iframe
     const handleMessage = (event) => {
       // Verify origin for security
-      if (!proxyUrl.startsWith(event.origin)) {
-        console.warn(
-          "Received message from unauthorized origin:",
-          event.origin
-        );
-        return;
-      }
+      // if (!proxyUrl.startsWith(event.origin)) {
+      //   console.warn(
+      //     "Received message from unauthorized origin:",
+      //     event.origin
+      //   );
+      //   return;
+      // }
 
       const { type, requestId, data, error } = event.data;
 
