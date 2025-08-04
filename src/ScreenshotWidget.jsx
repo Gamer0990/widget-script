@@ -41,32 +41,6 @@ const ScreenshotWidget = ({
   const requestQueue = useRef(new Map()); // Changed to Map for better lookup
   const currentTheme = themeStyles[theme] || themeStyles.light;
 
-  async function fetchCurrentUser() {
-    try {
-      const response = await fetch(
-        "https://fairpe.flonnect.com/fairpe/flonnect/api/enterprise/get-current-user",
-        {
-          method: "GET",
-          credentials: "include", // This ensures cookies are sent
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("current user data", data);
-      return data;
-    } catch (error) {
-      console.error("Error fetching current user:", error);
-      throw error;
-    }
-  }
-
   // Initialize iframe proxy
   useEffect(() => {
     const iframe = document.createElement("iframe");
@@ -265,35 +239,31 @@ const ScreenshotWidget = ({
     });
   };
 
-  // const fetchCurrentUser = () => {
-  //   makeProxyRequest(
-  //     `${apiEndpoint}flonnect/api/enterprise/get-current-user`,
-  //     {
-  //       method: "GET",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     },
-  //     (data, error) => {
-  //       if (error) {
-  //         console.error("Failed to fetch current user:", error);
-  //       } else {
-  //         console.log("Current user:", data);
-  //       }
-  //     }
-  //   );
-  // };
-
-  // useEffect(() => {
-  //   console.log("proxy ready", proxyReady, proxyUrl);
-  //   if (proxyReady) {
-  //     fetchCurrentUser();
-  //   }
-  // }, [proxyReady, apiEndpoint, apiKey]);
+  const fetchCurrentUser = () => {
+    makeProxyRequest(
+      `${apiEndpoint}flonnect/api/enterprise/get-current-user`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+      (data, error) => {
+        if (error) {
+          console.error("Failed to fetch current user:", error);
+        } else {
+          console.log("Current user:", data);
+        }
+      }
+    );
+  };
 
   useEffect(() => {
-    fetchCurrentUser();
-  }, []);
+    console.log("proxy ready", proxyReady, proxyUrl);
+    if (proxyReady) {
+      fetchCurrentUser();
+    }
+  }, [proxyReady, apiEndpoint, apiKey]);
 
   return (
     <WidgetWrapper
