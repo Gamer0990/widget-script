@@ -282,7 +282,7 @@ const ScreenshotWidget = ({
             ? "Capturing..."
             : !proxyReady
             ? "Loading..."
-            : "📸 Take Screenshot"}
+            : "📸 Take bug screenshot"}
         </ScreenshotButton>
         <StatusText status={status} themeStyle={currentTheme}>
           {status}
