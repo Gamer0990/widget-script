@@ -265,31 +265,31 @@ const ScreenshotWidget = ({
     });
   };
 
-  const fetchCurrentUser = () => {
-    makeProxyRequest(
-      `${apiEndpoint}flonnect/api/enterprise/get-current-user`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-      (data, error) => {
-        if (error) {
-          console.error("Failed to fetch current user:", error);
-        } else {
-          console.log("Current user:", data);
-        }
-      }
-    );
-  };
+  // const fetchCurrentUser = () => {
+  //   makeProxyRequest(
+  //     `${apiEndpoint}flonnect/api/enterprise/get-current-user`,
+  //     {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     },
+  //     (data, error) => {
+  //       if (error) {
+  //         console.error("Failed to fetch current user:", error);
+  //       } else {
+  //         console.log("Current user:", data);
+  //       }
+  //     }
+  //   );
+  // };
 
-  useEffect(() => {
-    console.log("proxy ready", proxyReady, proxyUrl);
-    if (proxyReady) {
-      fetchCurrentUser();
-    }
-  }, [proxyReady, apiEndpoint, apiKey]);
+  // useEffect(() => {
+  //   console.log("proxy ready", proxyReady, proxyUrl);
+  //   if (proxyReady) {
+  //     fetchCurrentUser();
+  //   }
+  // }, [proxyReady, apiEndpoint, apiKey]);
 
   useEffect(() => {
     fetchCurrentUser();
