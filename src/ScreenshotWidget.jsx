@@ -78,6 +78,7 @@ const ScreenshotWidget = ({
 
       if (type === "API_RESPONSE") {
         // Handle API response
+        console.log("data", data);
         const request = requestQueue.current.get(requestId);
         if (request && request.callback) {
           if (error) {
@@ -144,7 +145,7 @@ const ScreenshotWidget = ({
     // Send request to proxy iframe (without callback)
     try {
       const targetOrigin = new URL(proxyUrl).origin;
-      console.log("target Origin", targetOrigin, requestForMessage);
+      // console.log("target Origin", targetOrigin, requestForMessage);
       iframeRef.current.contentWindow.postMessage(
         requestForMessage,
         targetOrigin
