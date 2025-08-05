@@ -2,6 +2,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import ScreenshotWidget from "./ScreenshotWidget.jsx";
+import { GlobalProvider } from "./context/globalContext.jsx";
 
 // Global function to initialize the widget
 window.initScreenshotWidget = function (config = {}) {
@@ -10,13 +11,12 @@ window.initScreenshotWidget = function (config = {}) {
     console.warn("Screenshot widget already initialized");
     return;
   }
+  console.log("config", config);
 
   // Default configuration
   const defaultConfig = {
-    apiEndpoint: "https://your-api.com/api/screenshots",
-    apiKey: "",
-    position: "bottom-right",
-    theme: "light",
+    domain: "",
+    projectId: "",
     containerId: "screenshot-widget-root",
   };
 
@@ -30,12 +30,12 @@ window.initScreenshotWidget = function (config = {}) {
   // Create React root and render
   const root = createRoot(container);
   root.render(
-    <ScreenshotWidget
-      apiEndpoint={finalConfig.apiEndpoint}
-      apiKey={finalConfig.apiKey}
-      position={finalConfig.position}
-      theme={finalConfig.theme}
-    />
+    <GlobalProvider>
+      <ScreenshotWidget
+        domain={finalConfig.domain}
+        projectId={finalConfig.projectId}
+      />
+    </GlobalProvider>
   );
 
   console.log("Screenshot widget initialized successfully");
@@ -52,10 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const scriptTag = document.querySelector("script[data-screenshot-widget]");
   if (scriptTag) {
     const config = {
-      apiEndpoint: scriptTag.dataset.apiEndpoint,
-      apiKey: scriptTag.dataset.apiKey,
-      position: scriptTag.dataset.position,
-      theme: scriptTag.dataset.theme,
+      domain: scriptTag.dataset.domain,
+      projectId: scriptTag.dataset.projectId,
     };
 
     // Remove undefined values

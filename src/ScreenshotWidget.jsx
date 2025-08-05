@@ -1,45 +1,27 @@
 import React, { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
-import {
-  ScreenshotButton,
-  StatusText,
-  WidgetContainer,
-  WidgetWrapper,
-} from "./ScreenShotWidget.styled";
 
-// ========== Theme Definitions ==========
-const themeStyles = {
-  light: {
-    bg: "#ffffff",
-    text: "#333333",
-    border: "#e1e5e9",
-    button: "#007bff",
-    buttonText: "#ffffff",
-  },
-  dark: {
-    bg: "#2d3748",
-    text: "#ffffff",
-    border: "#4a5568",
-    button: "#4299e1",
-    buttonText: "#ffffff",
-  },
-};
+import ShadowWrapper from "./components/ShadowWrapper";
+import EmbededBugReportIcon from "./components/embeded-bug-reportIcon/EmbededBugReportIcon";
+import { useGlobal } from "./context/globalContext";
+import { collectSystemInfo, handleApiResponse } from "./utils/constant";
 
 // ========== Main Component ==========
-const ScreenshotWidget = ({
-  apiEndpoint = "https://your-api.com/api/screenshots",
-  proxyUrl = "https://fairpe.flonnect.com/proxy.html", // Your proxy iframe URL
-  apiKey = "",
-  position = "bottom-right",
-  theme = "light",
-}) => {
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [status, setStatus] = useState("");
-  const [isVisible, setIsVisible] = useState(true);
+const ScreenshotWidget = ({ domain, projectId }) => {
+  const { state, dispatch } = useGlobal();
+  console.log("state", state);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCapture, setIsCapture] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [bugData, setBugData] = useState(null);
   const [proxyReady, setProxyReady] = useState(false);
+  const [systemInfo, setSystemInfo] = useState(false);
   const iframeRef = useRef(null);
-  const requestQueue = useRef(new Map()); // Changed to Map for better lookup
-  const currentTheme = themeStyles[theme] || themeStyles.light;
+  // const proxyUrl = `https://${domain}.flonnect.com/proxy.html`;
+  // const apiBaseUrl = `https://${domain}.flonnect.com/${domain}`;
+
+  const proxyUrl = `http://localhost:3000/proxy.html`;
+  const apiBaseUrl = `http://localhost:9000/fairpe`;
 
   // Initialize iframe proxy
   useEffect(() => {
@@ -64,31 +46,17 @@ const ScreenshotWidget = ({
       //   return;
       // }
 
-      const { type, requestId, data, error } = event.data;
+      const { type, requestType, data, error } = event.data;
 
       if (type === "PROXY_READY") {
         setProxyReady(true);
-        // Process any queued requests
-        requestQueue.current.forEach((request, reqId) => {
-          const { callback, ...requestData } = request; // Extract callback before sending
-          iframe.contentWindow.postMessage(requestData, event.origin);
-        });
         return;
       }
 
       if (type === "API_RESPONSE") {
         // Handle API response
-        console.log("data", data);
-        const request = requestQueue.current.get(requestId);
-        if (request && request.callback) {
-          if (error) {
-            request.callback(null, error);
-          } else {
-            request.callback(data, null);
-          }
-        }
-        // Remove processed request
-        requestQueue.current.delete(requestId);
+        console.log("data", error);
+        handleApiResponse(dispatch, requestType, data);
       }
     };
 
@@ -104,144 +72,55 @@ const ScreenshotWidget = ({
   }, [proxyUrl]);
 
   // Function to make API calls through iframe proxy
-  const makeProxyRequest = (endpoint, options = {}, callback) => {
+  const makeProxyRequest = (requestType, endpoint, options = {}, callback) => {
     if (!iframeRef.current || !proxyReady) {
       console.error("Proxy iframe not ready");
       callback(null, "Proxy not ready");
       return;
     }
 
-    const requestId = Date.now() + Math.random();
-
     // Store the complete request with callback for response handling
     const requestWithCallback = {
       type: "API_REQUEST",
-      requestId,
+      requestType,
       endpoint,
       options: {
         method: options.method || "GET",
         headers: options.headers || {},
         body: options.body,
       },
-      callback, // Keep callback for response handling
+      callback,
     };
 
     // Store request for response handling
-    requestQueue.current.set(requestId, requestWithCallback);
 
     // Create request object WITHOUT callback for postMessage
     const requestForMessage = {
       type: "API_REQUEST",
-      requestId,
-      endpoint,
+      requestType,
+      endpoint: `${apiBaseUrl}/${endpoint}`,
       options: {
         method: options.method || "GET",
         headers: options.headers || {},
         body: options.body,
       },
-      // NO callback property here - this is the key fix!
     };
 
-    // Send request to proxy iframe (without callback)
     try {
-      const targetOrigin = new URL(proxyUrl).origin;
-      // console.log("target Origin", targetOrigin, requestForMessage);
+      const targetOrigin = new URL(proxyUrl)?.origin;
       iframeRef.current.contentWindow.postMessage(
         requestForMessage,
         targetOrigin
       );
     } catch (error) {
       console.error("Failed to send message to proxy:", error);
-      requestQueue.current.delete(requestId); // Clean up failed request
-      callback(null, error.message);
     }
-  };
-
-  const captureScreenshot = async () => {
-    try {
-      setIsCapturing(true);
-      setStatus("Capturing screenshot...");
-      setIsVisible(false);
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const canvas = await html2canvas(document.body, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 0.5,
-        scrollX: 0,
-        scrollY: 0,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        ignoreElements: (el) =>
-          el.classList?.contains("screenshot-widget") ||
-          el.id === "screenshot-widget-root",
-      });
-
-      const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png", 0.8)
-      );
-
-      await uploadScreenshot(blob);
-      setStatus("Screenshot captured successfully!");
-      setTimeout(() => setStatus(""), 3000);
-    } catch (err) {
-      console.error("Capture failed:", err);
-      setStatus("Failed to capture screenshot");
-      setTimeout(() => setStatus(""), 3000);
-    } finally {
-      setIsCapturing(false);
-      setIsVisible(true);
-    }
-  };
-
-  const uploadScreenshot = async (blob) => {
-    return new Promise((resolve, reject) => {
-      // Convert blob to base64 for transmission
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64Data = reader.result.split(",")[1];
-
-        const payload = {
-          screenshot: base64Data,
-          filename: "screenshot.png",
-          url: window.location.href,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-          viewport: JSON.stringify({
-            width: window.innerWidth,
-            height: window.innerHeight,
-          }),
-        };
-
-        makeProxyRequest(
-          apiEndpoint,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          },
-          (data, error) => {
-            if (error) {
-              reject(new Error(`Upload failed: ${error}`));
-            } else {
-              resolve(data);
-            }
-          }
-        );
-      };
-
-      reader.onerror = () => reject(new Error("Failed to read blob"));
-      reader.readAsDataURL(blob);
-    });
   };
 
   const fetchCurrentUser = () => {
     makeProxyRequest(
-      `${apiEndpoint}flonnect/api/enterprise/get-current-user`,
+      "GETCURRENTUSER",
+      `flonnect/api/enterprise/get-current-user`,
       {
         method: "GET",
         headers: {
@@ -263,32 +142,27 @@ const ScreenshotWidget = ({
     if (proxyReady) {
       fetchCurrentUser();
     }
-  }, [proxyReady, apiEndpoint, apiKey]);
+  }, [proxyReady, apiBaseUrl]);
+
+  useEffect(() => {
+    collectSystemInfo().then((systemInfo) => {
+      setSystemInfo(systemInfo);
+    });
+  }, []);
 
   return (
-    <WidgetWrapper
-      className="screenshot-widget"
-      position={position}
-      visible={isVisible}
-    >
-      <WidgetContainer themeStyle={currentTheme}>
-        <ScreenshotButton
-          onClick={captureScreenshot}
-          disabled={isCapturing || !proxyReady}
-          isCapturing={isCapturing}
-          themeStyle={currentTheme}
-        >
-          {isCapturing
-            ? "Capturing..."
-            : !proxyReady
-            ? "Loading..."
-            : "📸 Take bug screenshot"}
-        </ScreenshotButton>
-        <StatusText status={status} themeStyle={currentTheme}>
-          {status}
-        </StatusText>
-      </WidgetContainer>
-    </WidgetWrapper>
+    <ShadowWrapper>
+      {!isCapture && !isRecording && (
+        <EmbededBugReportIcon
+          state={state}
+          setIsCapture={setIsCapture}
+          setIsRecording={setIsRecording}
+          setIsFormOpen={setIsFormOpen}
+          bugData={bugData}
+          makeProxyRequest={makeProxyRequest}
+        />
+      )}
+    </ShadowWrapper>
   );
 };
 
