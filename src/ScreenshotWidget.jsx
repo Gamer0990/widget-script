@@ -4,7 +4,12 @@ import html2canvas from "html2canvas";
 import ShadowWrapper from "./components/ShadowWrapper";
 import EmbededBugReportIcon from "./components/embeded-bug-reportIcon/EmbededBugReportIcon";
 import { useGlobal } from "./context/globalContext";
-import { collectSystemInfo, handleApiResponse } from "./utils/constant";
+import {
+  collectSystemInfo,
+  generateUUID,
+  handleApiResponse,
+  uploadImageUsingPresignedUrlForBugReport,
+} from "./utils/constant";
 
 // ========== Main Component ==========
 const ScreenshotWidget = ({ domain, projectId }) => {
@@ -16,6 +21,9 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   const [bugData, setBugData] = useState(null);
   const [proxyReady, setProxyReady] = useState(false);
   const [systemInfo, setSystemInfo] = useState(false);
+  const [preSignedUrl, setPreSignedUrl] = useState(null);
+
+  const base64Ref = useRef(null);
   const iframeRef = useRef(null);
   const proxyUrl = `https://${domain}.flonnect.com/proxy.html`;
   const apiBaseUrl = `https://${domain}.flonnect.com/${domain}`;
@@ -23,76 +31,12 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   // const proxyUrl = `http://localhost:3000/proxy.html`;
   // const apiBaseUrl = `http://localhost:9000/fairpe`;
 
-  // Initialize iframe proxy
-  useEffect(() => {
-    const iframe = document.createElement("iframe");
-    iframe.src = proxyUrl;
-    iframe.style.display = "none";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "none";
-
-    document.body.appendChild(iframe);
-    iframeRef.current = iframe;
-
-    // Listen for messages from proxy iframe
-    const handleMessage = (event) => {
-      // Verify origin for security
-      // if (!proxyUrl.startsWith(event.origin)) {
-      //   console.warn(
-      //     "Received message from unauthorized origin:",
-      //     event.origin
-      //   );
-      //   return;
-      // }
-
-      const { type, requestType, data, error } = event.data;
-
-      if (type === "PROXY_READY") {
-        setProxyReady(true);
-        return;
-      }
-
-      if (type === "API_RESPONSE") {
-        // Handle API response
-        console.log("data", error);
-        handleApiResponse(dispatch, requestType, data);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("message", handleMessage);
-      if (iframe && iframe.parentNode) {
-        iframe.parentNode.removeChild(iframe);
-      }
-    };
-  }, [proxyUrl]);
-
   // Function to make API calls through iframe proxy
-  const makeProxyRequest = (requestType, endpoint, options = {}, callback) => {
+  const makeProxyRequest = (requestType, endpoint, options = {}) => {
     if (!iframeRef.current || !proxyReady) {
       console.error("Proxy iframe not ready");
-      callback(null, "Proxy not ready");
       return;
     }
-
-    // Store the complete request with callback for response handling
-    const requestWithCallback = {
-      type: "API_REQUEST",
-      requestType,
-      endpoint,
-      options: {
-        method: options.method || "GET",
-        headers: options.headers || {},
-        body: options.body,
-      },
-      callback,
-    };
-
-    // Store request for response handling
 
     // Create request object WITHOUT callback for postMessage
     const requestForMessage = {
@@ -126,16 +70,97 @@ const ScreenshotWidget = ({ domain, projectId }) => {
         headers: {
           "Content-Type": "application/json",
         },
-      },
-      (data, error) => {
-        if (error) {
-          console.error("Failed to fetch current user:", error);
-        } else {
-          console.log("Current user:", data);
-        }
       }
     );
   };
+
+  // Initialize iframe proxy
+  useEffect(() => {
+    const iframe = document.createElement("iframe");
+    iframe.src = proxyUrl;
+    iframe.style.display = "none";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+
+    document.body.appendChild(iframe);
+    iframeRef.current = iframe;
+
+    // Listen for messages from proxy iframe
+    const handleMessage = (event) => {
+      // Verify origin for security
+      // if (!proxyUrl.startsWith(event.origin)) {
+      //   console.warn(
+      //     "Received message from unauthorized origin:",
+      //     event.origin
+      //   );
+      //   return;
+      // }
+
+      const { type, requestType, data, error } = event.data;
+      if (error) return;
+
+      if (type === "PROXY_READY") {
+        setProxyReady(true);
+        return;
+      }
+
+      if (type === "API_RESPONSE") {
+        // Handle API response
+        console.log("base64", base64Ref);
+        if (requestType === "GETCURRENTUSER" && data?.user) {
+          dispatch({ type: type, data: data?.user });
+        }
+
+        if (requestType === "GETPRSIGNURL" && data?.signedUrl) {
+          setPreSignedUrl(data?.signedUrl?.split("?")?.[0]);
+          uploadImageUsingPresignedUrlForBugReport(
+            data?.signedUrl,
+            base64Url,
+            makeProxyRequest
+          );
+        }
+
+        if (requestType === "UPLOADIMAGEUSINGPRSIGN" && data) {
+          const payload = {
+            bugId: generateUUID(),
+            bugUrl: preSignedUrl,
+            captureType: "SCREENSHOT",
+            deviceInfo: systemInfo || {},
+            consoleLogs: [],
+            networkLogs: [],
+            title: document?.title || "",
+          };
+          makeProxyRequest(
+            "ADDBUGREPORT",
+            `flonnect/api/bugreports/add-bug-capture`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: payload,
+            }
+          );
+        }
+
+        if (requestType === "ADDBUGREPORT" && data) {
+          const redirectUrl = `https://${domain}.flonnect.com/dashboard/homepage/bug/${data.id}`;
+          window.open(redirectUrl, "_blank");
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    };
+  }, [proxyUrl]);
 
   useEffect(() => {
     console.log("proxy ready", proxyReady, proxyUrl);
@@ -143,6 +168,8 @@ const ScreenshotWidget = ({ domain, projectId }) => {
       fetchCurrentUser();
     }
   }, [proxyReady, apiBaseUrl]);
+
+  console.log("base", base64Ref);
 
   useEffect(() => {
     collectSystemInfo().then((systemInfo) => {
@@ -160,6 +187,7 @@ const ScreenshotWidget = ({ domain, projectId }) => {
           setIsFormOpen={setIsFormOpen}
           bugData={bugData}
           makeProxyRequest={makeProxyRequest}
+          base64Ref={base64Ref}
         />
       )}
     </ShadowWrapper>

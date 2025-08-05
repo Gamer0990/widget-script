@@ -60,6 +60,7 @@ const EmbededBugReportIcon = ({
   setIsFormOpen,
   bugData,
   makeProxyRequest,
+  base64Ref,
 }) => {
   const { user } = state;
   const [showTooltip, setShowTooltip] = useState(false);
@@ -90,8 +91,6 @@ const EmbededBugReportIcon = ({
       // ✅ Get base64-encoded PNG image
       const base64Image = canvas.toDataURL("image/png");
 
-      console.log("Base64 Screenshot:", base64Image);
-
       return base64Image;
     } catch (error) {
       console.error("Error capturing screenshot:", error);
@@ -112,7 +111,9 @@ const EmbededBugReportIcon = ({
       const name = user?.user?.email?.split("@")[0];
       const documentId = generateUUID();
       const currentTimestampInSeconds = Math.floor(Date.now() / 1000);
-      // const base64Url = await captureScreenshot();
+      const base64Url = await captureScreenshot();
+      base64Ref.current = base64Url;
+      // setIsCapture(false);
       let fileName = `${name}/${documentId}/${currentTimestampInSeconds}`;
 
       const data = {
@@ -120,24 +121,13 @@ const EmbededBugReportIcon = ({
         fileName: fileName,
       };
       console.log("data", data);
-      makeProxyRequest(
-        "GETPRSIGNURL",
-        `flonnect/api/uploads/getpresignedurl`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: data,
+      makeProxyRequest("GETPRSIGNURL", `flonnect/api/uploads/getpresignedurl`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        (data, error) => {
-          if (error) {
-            console.error("Failed to fetch current user:", error);
-          } else {
-            console.log("Current user:", data);
-          }
-        }
-      );
+        body: data,
+      });
     } else if (actionType === "record") {
       setIsFormOpen(true);
     } else if (actionType === "report") {

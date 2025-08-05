@@ -117,13 +117,29 @@ function getCountryFlag(countryCode) {
   return String.fromCodePoint(...codePoints);
 }
 
-// handle api response based on type
+// api call function
+export const uploadImageUsingPresignedUrlForBugReport = async (
+  presignedUrl,
+  base64url,
+  makeProxyRequest
+) => {
+  if (!presignedUrl || !base64url) return;
+  try {
+    let finalImg = base64url?.split(",")[1];
+    const base64 = finalImg.replace(/-/g, "+").replace(/_/g, "/");
 
-export function handleApiResponse(dispatch, type) {
-  switch (type) {
-    case "GETCURRENTUSER":
-      return dispatch({ type: type, data: "data" });
-    default:
-      return;
-  }
-}
+    const binaryString = atob(base64);
+    const uint8Array = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      uint8Array[i] = binaryString.charCodeAt(i);
+    }
+
+    makeProxyRequest("UPLOADIMAGEUSINGPRSIGN", `${presignedUrl?.signedUrl}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "image/png",
+      },
+      body: uint8Array,
+    });
+  } catch (e) {}
+};
