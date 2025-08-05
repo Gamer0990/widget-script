@@ -96,7 +96,7 @@ const ScreenshotWidget = ({ domain, projectId }) => {
       //   );
       //   return;
       // }
-
+      console.log("event", event);
       const { type, requestType, data, error } = event.data;
       if (error) return;
 
