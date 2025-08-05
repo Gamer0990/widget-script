@@ -17,11 +17,11 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   const [proxyReady, setProxyReady] = useState(false);
   const [systemInfo, setSystemInfo] = useState(false);
   const iframeRef = useRef(null);
-  // const proxyUrl = `https://${domain}.flonnect.com/proxy.html`;
-  // const apiBaseUrl = `https://${domain}.flonnect.com/${domain}`;
+  const proxyUrl = `https://${domain}.flonnect.com/proxy.html`;
+  const apiBaseUrl = `https://${domain}.flonnect.com/${domain}`;
 
-  const proxyUrl = `http://localhost:3000/proxy.html`;
-  const apiBaseUrl = `http://localhost:9000/fairpe`;
+  // const proxyUrl = `http://localhost:3000/proxy.html`;
+  // const apiBaseUrl = `http://localhost:9000/fairpe`;
 
   // Initialize iframe proxy
   useEffect(() => {
