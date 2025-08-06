@@ -120,7 +120,7 @@ const ScreenshotWidget = ({ domain, projectId }) => {
 
               uploadImageUsingPresignedUrlForBugReport(
                 parsedData.signedUrl,
-                base64Url,
+                base64Ref?.current,
                 makeProxyRequest
               );
             }
