@@ -111,14 +111,22 @@ const ScreenshotWidget = ({ domain, projectId }) => {
         if (requestType === "GETCURRENTUSER" && data?.user) {
           dispatch({ type: type, data: data?.user });
         }
+        if (requestType === "GETPRSIGNURL" && data) {
+          try {
+            const parsedData = JSON.parse(data); // Convert text to object
 
-        if (requestType === "GETPRSIGNURL" && data?.signedUrl) {
-          setPreSignedUrl(data?.signedUrl?.split("?")?.[0]);
-          uploadImageUsingPresignedUrlForBugReport(
-            data?.signedUrl,
-            base64Url,
-            makeProxyRequest
-          );
+            if (parsedData?.signedUrl) {
+              setPreSignedUrl(parsedData.signedUrl.split("?")?.[0]);
+
+              uploadImageUsingPresignedUrlForBugReport(
+                parsedData.signedUrl,
+                base64Url,
+                makeProxyRequest
+              );
+            }
+          } catch (error) {
+            console.error("Invalid JSON format in data:", error);
+          }
         }
 
         if (requestType === "UPLOADIMAGEUSINGPRSIGN" && data) {
