@@ -50,6 +50,11 @@ export function generateUUID() {
   );
 }
 
+export async function isMicrophoneAvailable() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.some((device) => device.kind === "audioinput");
+}
+
 // get system info
 export async function collectSystemInfo() {
   try {
@@ -134,12 +139,25 @@ export const uploadImageUsingPresignedUrlForBugReport = async (
       uint8Array[i] = binaryString.charCodeAt(i);
     }
 
-    makeProxyRequest("UPLOADIMAGEUSINGPRSIGN", `${presignedUrl?.signedUrl}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "image/png",
-      },
-      body: uint8Array,
-    });
+    makeProxyRequest(
+      "API_REQUEST",
+      "UPLOADIMAGEUSINGPRSIGN",
+      `${presignedUrl}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "image/png",
+        },
+        body: uint8Array,
+      }
+    );
   } catch (e) {}
+};
+
+export const formatTime = (seconds) => {
+  const mins = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const secs = (seconds % 60).toString().padStart(2, "0");
+  return `${mins}:${secs}`;
 };

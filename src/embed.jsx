@@ -11,7 +11,17 @@ window.initScreenshotWidget = function (config = {}) {
     console.warn("Screenshot widget already initialized");
     return;
   }
-  console.log("config", config);
+
+  const existingFontLink = document.querySelector(
+    "link[href*='fonts.googleapis.com/css2?family=Inter']"
+  );
+  if (!existingFontLink) {
+    const fontLink = document.createElement("link");
+    fontLink.rel = "stylesheet";
+    fontLink.href =
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";
+    document.head.appendChild(fontLink);
+  }
 
   // Default configuration
   const defaultConfig = {

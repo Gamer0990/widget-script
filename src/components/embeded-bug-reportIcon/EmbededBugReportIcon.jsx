@@ -61,6 +61,8 @@ const EmbededBugReportIcon = ({
   bugData,
   makeProxyRequest,
   base64Ref,
+  startRecording,
+  domain,
 }) => {
   const { user } = state;
   const [showTooltip, setShowTooltip] = useState(false);
@@ -70,7 +72,6 @@ const EmbededBugReportIcon = ({
   const [toastShow, setToastShow] = useState(false);
 
   const captureScreenshot = async () => {
-    console.log("came");
     try {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -100,11 +101,6 @@ const EmbededBugReportIcon = ({
   };
 
   const handleActionBtnClick = async (actionType) => {
-    // if (!bugData) {
-    //   setToastShow(true);
-    //   return;
-    // }
-    console.log("actionType", actionType);
     if (actionType === "capture") {
       // setHasDomainProject(false);
       setIsCapture(true);
@@ -120,16 +116,21 @@ const EmbededBugReportIcon = ({
         id: documentId,
         fileName: fileName,
       };
-      console.log("data", data);
-      makeProxyRequest("GETPRSIGNURL", `flonnect/api/uploads/getpresignedurl`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: data,
-      });
+      makeProxyRequest(
+        "API_REQUEST",
+        "GETPRSIGNURL",
+        `flonnect/api/uploads/getpresignedurl`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: data,
+        }
+      );
     } else if (actionType === "record") {
       setIsFormOpen(true);
+      // startRecording();
     } else if (actionType === "report") {
       setHoveredBtnId(null);
       setIsBugCardIconClicked(true);
@@ -142,7 +143,14 @@ const EmbededBugReportIcon = ({
         <BugButtonContainer>
           {/* {showTooltip && <div>Report a Bug</div>} */}
           <BugButton
-            onClick={() => setOpen((prev) => !prev)}
+            onClick={() => {
+              if (!user) {
+                const redirectUrl = `https://${domain}.flonnect.com/`;
+                window.open(redirectUrl, "_blank");
+                return;
+              }
+              setOpen((prev) => !prev);
+            }}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
