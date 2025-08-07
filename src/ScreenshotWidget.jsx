@@ -288,23 +288,22 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   const handleMessage = useCallback(
     (event) => {
       // Verify origin for security
-      // if (!event.origin.endsWith(".flonnect.com")) {
-      //   console.warn("Blocked message from unauthorized origin:", event.origin);
-      //   return;
-      // }
-
-      const { type, requestType, data, error } = event.data;
-
-      if (requestType === "GETCURRENTUSER" && error) {
-        dispatch({ type: requestType, data: null });
+      if (!event.origin.endsWith(".flonnect.com")) {
+        console.warn("Blocked message from unauthorized origin:", event.origin);
+        return;
       }
 
-      if (error) return;
+      const { type, requestType, data, error } = event.data;
 
       if (type === "PROXY_READY") {
         setProxyReady(true);
         return;
       }
+      if (requestType === "GETCURRENTUSER" && error) {
+        dispatch({ type: requestType, data: null });
+      }
+
+      if (error) return;
 
       if (type === "API_RESPONSE") {
         // Handle API response
