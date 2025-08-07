@@ -296,7 +296,8 @@ const ScreenshotWidget = ({ domain, projectId }) => {
       const { type, requestType, data, error } = event.data;
 
       if (type === "PROXY_READY") {
-        setProxyReady(true);
+        console.log("proxy updated");
+        fetchCurrentUser();
         return;
       }
       if (requestType === "GETCURRENTUSER" && error) {
