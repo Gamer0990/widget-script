@@ -360,7 +360,7 @@ const ScreenshotWidget = ({ domain, projectId }) => {
         if (requestType === "ADDBUGREPORT" && data) {
           // base64Ref.current = null;
           // preSignedUrl.current = null;
-          const redirectUrl = `https://${domain}.flonnect.com/dashboard/homepage/bug/${data?.data?.id}}`;
+          const redirectUrl = `https://${domain}.flonnect.com/dashboard/homepage/bug/${data?.data?.id}`;
           // const redirectUrl = `http://localhost:3000/dashboard/homepage/bug/${data?.data?.id}`;
           window.open(redirectUrl, "_blank");
         }
