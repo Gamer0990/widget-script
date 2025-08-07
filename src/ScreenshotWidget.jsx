@@ -51,11 +51,11 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   const iframeRef = useRef(null);
   const isCancelledRef = useRef(false);
 
-  // const proxyUrl = `https://${domain}.flonnect.com/proxy.html`;
-  // const apiBaseUrl = `https://${domain}.flonnect.com/${domain}`;
+  const proxyUrl = `https://${domain}.flonnect.com/proxy.html`;
+  const apiBaseUrl = `https://${domain}.flonnect.com/${domain}`;
 
-  const proxyUrl = `http://localhost:3000/proxy.html`;
-  const apiBaseUrl = `http://localhost:9000/fairpe`;
+  // const proxyUrl = `http://localhost:3000/proxy.html`;
+  // const apiBaseUrl = `http://localhost:9000/fairpe`;
 
   // Function to make API calls through iframe proxy
   const makeProxyRequest = (type, requestType, endpoint, options = {}) => {
