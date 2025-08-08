@@ -63,8 +63,10 @@ const EmbededBugReportIcon = ({
   base64Ref,
   startRecording,
   domain,
+  fetchCurrentUser,
+  dispatch,
 }) => {
-  const { user } = state;
+  const { user, iconClick } = state;
   const [showTooltip, setShowTooltip] = useState(false);
   const [open, setOpen] = useState(false);
   const [hoveredBtnId, setHoveredBtnId] = useState(null);
@@ -144,12 +146,17 @@ const EmbededBugReportIcon = ({
           {/* {showTooltip && <div>Report a Bug</div>} */}
           <BugButton
             onClick={() => {
-              if (!user) {
-                const redirectUrl = `https://${domain}.flonnect.com/`;
-                window.open(redirectUrl, "_blank");
-                return;
+              // if (!user) {
+              //   const redirectUrl = `https://${domain}.flonnect.com/`;
+              //   window.open(redirectUrl, "_blank");
+              //   return;
+              // }
+              // setOpen((prev) => !prev);
+              if (!iconClick) {
+                fetchCurrentUser();
+              } else {
+                dispatch({ type: "HANDLEICONCLICK", data: false });
               }
-              setOpen((prev) => !prev);
             }}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -160,12 +167,12 @@ const EmbededBugReportIcon = ({
               draggable={false}
             />
 
-            {showTooltip && !open && bugData && (
+            {showTooltip && !iconClick && bugData && (
               <TooltipContainer>{bugData?.bugCount} Bugs</TooltipContainer>
             )}
           </BugButton>
 
-          <PopupPanel visible={open}>
+          <PopupPanel visible={iconClick}>
             {actinBtns.map((btn) => (
               <ActionBtnContainer>
                 <ActionBtn

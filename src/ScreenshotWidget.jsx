@@ -118,7 +118,10 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   const startRecording = async (preSignedUrls) => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { mediaSource: "screen" },
+        video: {
+          displaySurface: "monitor",
+          // displaySurface: "browser",
+        },
         audio: true,
       });
 
@@ -229,7 +232,7 @@ const ScreenshotWidget = ({ domain, projectId }) => {
         mediaRecorder.stop();
         setMediaRecorder(null);
         setIsRecording(false);
-      }, 500);
+      }, 1000);
     }
   };
 
@@ -288,20 +291,24 @@ const ScreenshotWidget = ({ domain, projectId }) => {
   const handleMessage = useCallback(
     (event) => {
       // Verify origin for security
-      if (!event.origin.endsWith(".flonnect.com")) {
-        console.warn("Blocked message from unauthorized origin:", event.origin);
-        return;
-      }
+      // if (!event.origin.endsWith(".flonnect.com")) {
+      //   console.warn("Blocked message from unauthorized origin:", event.origin);
+      //   return;
+      // }
 
       const { type, requestType, data, error } = event.data;
 
       if (type === "PROXY_READY") {
         console.log("proxy updated");
-        fetchCurrentUser();
+        // fetchCurrentUser();
         return;
       }
       if (requestType === "GETCURRENTUSER" && error) {
         dispatch({ type: requestType, data: null });
+        const redirectUrl = `https://${domain}.flonnect.com/`;
+        window.open(redirectUrl, "_blank");
+        return;
+        // dispatch({ type: "HANDLEICONCLICK", data: false });
       }
 
       if (error) return;
@@ -311,6 +318,7 @@ const ScreenshotWidget = ({ domain, projectId }) => {
 
         if (requestType === "GETCURRENTUSER" && data) {
           dispatch({ type: requestType, data: data?.user });
+          // dispatch({ type: "HANDLEICONCLICK", data: true });
         }
 
         // screen shot related mesages
@@ -518,6 +526,8 @@ const ScreenshotWidget = ({ domain, projectId }) => {
           base64Ref={base64Ref}
           startRecording={startRecording}
           domain={domain}
+          fetchCurrentUser={fetchCurrentUser}
+          dispatch={dispatch}
         />
       )}
       {isFormOpen && (

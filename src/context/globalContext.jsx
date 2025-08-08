@@ -8,6 +8,7 @@ const initialState = {
   videoCaptureDetails: null,
   openSubTaskForm: false,
   loader: false,
+  iconClick: false,
 };
 
 function globalReducer(state, action) {
@@ -17,6 +18,7 @@ function globalReducer(state, action) {
       return {
         ...state,
         user: action?.data,
+        iconClick: action?.data ? true : false,
       };
 
     case "STARTUPLOADING":
@@ -69,6 +71,12 @@ function globalReducer(state, action) {
         fileDetails: null,
         videoCaptureDetails: null,
         videoFormDetails: null,
+      };
+
+    case "HANDLEICONCLICK":
+      return {
+        ...state,
+        iconClick: action.data,
       };
 
     default:
